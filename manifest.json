@@ -1,7 +1,7 @@
 {
     "name": "Satisfaction",
-    "start_url": "/",
-    "display": "standalone",
+    "start_url": "/Satisfaction/?fullscreen=true",
+    "display": "fullscreen",
     "icons": [
       {
         "src": "48x48.jpg",
