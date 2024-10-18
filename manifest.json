@@ -1,6 +1,6 @@
 {
     "name": "Satisfaction",
-    "start_url": "/Satisfaction/?fullscreen=true",
+    "start_url": "/Satisfaction",
     "display": "standalone",
     "orientation": "landscape",
     "icons": [
@@ -20,8 +20,8 @@
         "type": "image/jpg"
       },
       {
-        "src": "256x256.jpg",
-        "sizes": "256x256",
+        "src": "512x512.jpg",
+        "sizes": "512x512",
         "type": "image/jpg"
       }
     ]
