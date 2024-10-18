@@ -2,6 +2,7 @@
     "name": "Satisfaction",
     "start_url": "/Satisfaction/?fullscreen=true",
     "display": "standalone",
+    "orientation": "landscape",
     "icons": [
       {
         "src": "48x48.jpg",
