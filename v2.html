@@ -78,7 +78,7 @@
                     <v-row justify="center" v-if="showThankYou">
                         <v-col cols="12" class="text-center">
                             <v-card elevation="2" class="pa-6">
-                                <div class="feedback-icon">{{ lastFeedbackIcon }}</div>
+                                <div class="feedback-icon" v-html="lastFeedbackIcon"></div>
                                 <div class="thank-you-message" :class="thankYouColor">
                                     {{ thankYouMessage }}
                                 </div>
@@ -216,9 +216,9 @@
             computed: {
                 lastFeedbackIcon() {
                     switch(this.lastFeedback) {
-                        case 'happy': return '😊';
-                        case 'neutral': return '😐';
-                        case 'unhappy': return '😞';
+                        case 'happy': return '<img src="happy.png" alt="Happy Feedback" class="emoji-img">';
+                        case 'neutral': return '<img src="neutral.png" alt="Neutral Feedback" class="emoji-img">';
+                        case 'unhappy': return '<img src="unhappy.png" alt="Unhappy Feedback" class="emoji-img">';
                         default: return '';
                     }
                 },
