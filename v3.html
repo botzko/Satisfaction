@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="bg">
+<!-- Previous head section remains the same -->
+<head>
+    <title>Система за Обратна Връзка</title>
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifestv3.json" />
+    <style>
+        .emoji-btn {
+            font-size: 128px !important;
+            height: 200px !important;
+            width: 200px !important;
+            transition: transform 0.2s;
+        }
+        .emoji-btn:hover {
+            transform: scale(1.1);
+        }
+        .emoji-img {
+            width: 128px;
+            height: 128px;
+        }
+        .emoji-img-admin {
+            width: 32px;
+            height: 32px;
+        }
+        .thank-you-message {
+            font-size: 2.5em;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        .feedback-icon {
+            font-size: 4em;
+            margin: 20px;
+        }
+        .emoji-label {
+            font-size: 24px !important;
+            margin-top: 20px !important;
+            display: block;
+        }
+        .feedback-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <v-app>
+            <v-main>
+                <!-- Previous user interface container remains the same -->
+                <v-container v-if="!isAdmin">
+                    <v-row justify="center" align="center" class="mt-10" v-if="!showThankYou">
+                        <v-col cols="12" class="text-center">
+                            <h1 class="mb-6">Как оценявате вашето преживяване?</h1>
+                        </v-col>
+                        <v-col cols="4" class="text-center">
+                            <v-btn class="emoji-btn" text @click="submitFeedback('happy')">
+                                <img src="images/happy.png" alt="Happy Feedback" class="emoji-img">
+                            </v-btn>
+                            <span class="emoji-label">Добро</span>
+                        </v-col>
+                        <v-col cols="4" class="text-center">
+                            <v-btn class="emoji-btn" text @click="submitFeedback('neutral')">
+                                <img src="images/neutral.png" alt="Neutral Feedback" class="emoji-img">
+                            </v-btn>
+                            <span class="emoji-label">Неутрално</span>
+                        </v-col>
+                        <v-col cols="4" class="text-center">
+                            <v-btn class="emoji-btn" text @click="submitFeedback('unhappy')">
+                                <img src="images/unhappy.png" alt="Unhappy Feedback" class="emoji-img">
+                            </v-btn>
+                            <span class="emoji-label">Лошо</span>
+                        </v-col>
+                    </v-row>
+
+                    <v-row justify="center" v-if="showThankYou">
+                        <v-col cols="12" class="text-center">
+                            <v-card elevation="2" class="pa-6">
+                                <div class="feedback-icon" v-html="lastFeedbackIcon"></div>
+                                <div class="thank-you-message" :class="thankYouColor">
+                                    {{ thankYouMessage }}
+                                </div>
+                                <v-card-text class="text-h6 mt-4">
+                                    {{ thankYouSubMessage }}
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+                    <v-row class="mt-10" v-if="!showThankYou">
+                        <v-col cols="12" class="text-center">
+                            <v-btn @click="showLoginDialog = true" text color="grey">
+                                Административен Достъп
+                            </v-btn>
+                        </v-col>
+                    </v-row>
+
+                    <!-- Login Dialog -->
+                    <v-dialog v-model="showLoginDialog" max-width="400">
+                        <v-card>
+                            <v-card-title>
+                                Вход в административния панел
+                            </v-card-title>
+                            <v-card-text>
+                                <v-text-field
+                                    v-model="password"
+                                    :error-messages="loginError"
+                                    label="Парола"
+                                    type="password"
+                                    @keyup.enter="login"
+                                ></v-text-field>
+                            </v-card-text>
+                            <v-card-actions>
+                                <v-spacer></v-spacer>
+                                <v-btn color="grey" text @click="showLoginDialog = false">
+                                    Отказ
+                                </v-btn>
+                                <v-btn color="primary" @click="login">
+                                    Вход
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+                </v-container>
+
+                <!-- Updated Admin Interface -->
+                <v-container v-else>
+                    <v-row>
+                        <v-col cols="12">
+                            <h1>Административен Панел</h1>
+                            <v-btn @click="logout" class="mb-4">
+                                Изход
+                            </v-btn>
+                            <v-data-table
+                                :headers="headers"
+                                :items="feedbackData"
+                                :search="search"
+                                :sort-by="['timestamp']"
+                                :sort-desc="[true]"
+                                class="elevation-1"
+                            >
+                                <template v-slot:top>
+                                    <v-text-field
+                                        v-model="search"
+                                        label="Търсене"
+                                        class="mx-4"
+                                    ></v-text-field>
+                                </template>
+                                <template v-slot:item.feedback="{ item }">
+                                    <div class="feedback-cell">
+                                        <span style="font-size: 24px;">
+                                            <img v-if="item.feedback === 'happy'" src="images/happy.png" alt="Happy" class="emoji-img-admin">
+                                            <img v-if="item.feedback === 'neutral'" src="images/neutral.png" alt="Neutral" class="emoji-img-admin">
+                                            <img v-if="item.feedback === 'unhappy'" src="images/unhappy.png" alt="Unhappy" class="emoji-img-admin">
+                                        </span>
+                                        <span>
+                                            <span v-if="item.feedback === 'happy'">Добро</span>
+                                            <span v-if="item.feedback === 'neutral'">Неутрално</span>
+                                            <span v-if="item.feedback === 'unhappy'">Лошо</span>
+                                        </span>
+                                    </div>
+                                </template>
+                                <template v-slot:item.actions="{ item }">
+                                    <v-btn 
+                                        color="error" 
+                                        text 
+                                        small
+                                        @click="deleteItem(item)"
+                                    >
+                                        <v-icon>mdi-delete</v-icon>
+                                    </v-btn>
+                                </template>
+                            </v-data-table>
+                        </v-col>
+                    </v-row>
+                </v-container>
+            </v-main>
+        </v-app>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            vuetify: new Vuetify(),
+            data: {
+                showThankYou: false,
+                isAdmin: false,
+                search: '',
+                lastFeedback: '',
+                feedbackData: [],
+                showLoginDialog: false,
+                password: '',
+                loginError: '',
+                headers: [
+                    { 
+                        text: 'Време',
+                        value: 'timestamp',
+                        align: 'start'
+                    },
+                    {
+                        text: 'Оценка',
+                        value: 'feedback',
+                    },
+                    { 
+                        text: 'Действия',
+                        value: 'actions',
+                        sortable: false,
+                        align: 'end'
+                    },
+                ]
+            },
+            computed: {
+                lastFeedbackIcon() {
+                    switch(this.lastFeedback) {
+                        case 'happy': return '<img src="images/happy.png" alt="Happy Feedback" class="emoji-img">';
+                        case 'neutral': return '<img src="images/neutral.png" alt="Neutral Feedback" class="emoji-img">';
+                        case 'unhappy': return '<img src="images/unhappy.png" alt="Unhappy Feedback" class="emoji-img">';
+                        default: return '';
+                    }
+                },
+                thankYouMessage() {
+                    switch(this.lastFeedback) {
+                        case 'happy': return 'Страхотно! Благодарим ви!';
+                        case 'neutral': return 'Благодарим за обратната връзка!';
+                        case 'unhappy': return 'Съжаляваме за неприятното преживяване!';
+                        default: return 'Благодарим ви!';
+                    }
+                },
+                thankYouSubMessage() {
+                    switch(this.lastFeedback) {
+                        case 'happy': return 'Радваме се, че останахте доволни!';
+                        case 'neutral': return 'Ценим вашето искрено мнение.';
+                        case 'unhappy': return 'Ще положим усилия да подобрим обслужването.';
+                        default: return '';
+                    }
+                },
+                thankYouColor() {
+                    switch(this.lastFeedback) {
+                        case 'happy': return 'success--text';
+                        case 'neutral': return 'blue--text';
+                        case 'unhappy': return 'deep-orange--text';
+                        default: return '';
+                    }
+                }
+            },
+            mounted() {
+                // Load saved feedback data from localStorage
+                const savedData = localStorage.getItem('feedbackData');
+                if (savedData) {
+                    this.feedbackData = JSON.parse(savedData);
+                }
+            },
+            methods: {
+                submitFeedback(type) {
+                    this.lastFeedback = type;
+                    const feedback = {
+                        feedback: type,
+                        timestamp: new Date().toLocaleString('bg-BG')
+                    };
+                    
+                    this.feedbackData.push(feedback);
+                    localStorage.setItem('feedbackData', JSON.stringify(this.feedbackData));
+                    
+                    this.showThankYou = true;
+                    setTimeout(() => {
+                        this.showThankYou = false;
+                    }, 5000);
+                },
+                login() {
+                    if (this.password === 'adminmilov') {
+                        this.isAdmin = true;
+                        this.showLoginDialog = false;
+                        this.password = '';
+                        this.loginError = '';
+                    } else {
+                        this.loginError = 'Грешна парола';
+                    }
+                },
+                logout() {
+                    this.isAdmin = false;
+                    this.password = '';
+                    this.loginError = '';
+                },
+                deleteItem(item) {
+                    const index = this.feedbackData.indexOf(item);
+                    if (index > -1) {
+                        this.feedbackData.splice(index, 1);
+                        localStorage.setItem('feedbackData', JSON.stringify(this.feedbackData));
+                    }
+                }
+            }
+        })
+    </script>
+</body>
+</html>
